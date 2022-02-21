@@ -8,6 +8,8 @@
 #' @importFrom stats as.formula dbeta dexp dgamma dnorm formula median nlm optimize pgamma qgamma quantile rexp rnorm sd
 #' @importFrom utils help
 #' @importFrom rlang .data
+#' @importFrom shinyjs hidden
+#' @importFrom methods is
 NULL
 
 
@@ -19,7 +21,7 @@ possible_models <- function() return(c("iid", "linear", "rw1", "rw2", "generic0"
 #' Define latent component
 #'
 #' Function for defining a latent component for the HD prior package. All model components must be specified, and if an HD
-#' prior is used, this is specified later
+#' prior is used, this is specified later. See \link[makemyprior]{make_prior} for more details and examples.
 #' @param label Name of the component (short names is an advantage as they are used in the app), no default (MUST be provided)
 #' @param model Type of model, default is "iid" (see list of models: \link[makemyprior]{makemyprior_models}).
 #' @param constr Sum-to-zero constraints on component (default TRUE)
@@ -199,7 +201,7 @@ make_prior <- function(formula, data, family = "gaussian",
   # (mw-priors are marked with "mw" and dealt with later)
   prior <- try(decompose_formula(formula, family, data))
 
-  if (class(prior) == "try-error")
+  if (is(prior, "try-error"))
     stop("Could not decompose the formula, check that your input is correct and that the names of the data matches the entries in the formula.", call. = FALSE)
 
   if (length(intercept_prior) == 0) intercept_prior <- c(0, 1000)
@@ -336,7 +338,7 @@ make_prior <- function(formula, data, family = "gaussian",
   covmats_us <- lapply(prior$random_effects, function(x) {
     if (!is.null(x$model_data$Cmatrix)){
       prec_mat <- try(eval(parse(text = x$model_data$Cmatrix)), silent = TRUE) # if in environment
-      if (class(prec_mat)[1] == "try-error") prec_mat <- eval(parse(text = x$model_data$Cmatrix), data) # if not in environment, check if it is in the data
+      if (is(prec_mat, "try-error")) prec_mat <- eval(parse(text = x$model_data$Cmatrix), data) # if not in environment, check if it is in the data
       covmat <- MASS::ginv(as.matrix(prec_mat))
       #typvar <- typical_variance(covmat)
       covmat <- covmat #/typvar
@@ -410,7 +412,7 @@ make_prior <- function(formula, data, family = "gaussian",
 check_if_valid_input_make_prior <- function(intp, covp, randp, form){
 
   if (form$use_intercept) {
-  if (class(intp) != "numeric" || length(intp) != 2) {
+  if (!is(intp, "numeric") || length(intp) != 2) {
     stop("Wrong input 'intercept_prior'. Provide a numeric vector of length two or nothing.", call. = FALSE)
   } else if (length(intp) == 2 && !form$use_intercept){
     stop("You have provided a prior for the intercept, but there is no intercept in the model.", call. = FALSE)
@@ -418,7 +420,7 @@ check_if_valid_input_make_prior <- function(intp, covp, randp, form){
   }
 
   for (ind in seq_along(covp)){
-    if (class(covp[[ind]]) != "numeric" || length(covp[[ind]]) != 2){
+    if (!is(covp[[ind]], "numeric") || length(covp[[ind]]) != 2){
       stop("Wrong input 'covariate_prior'. Provide a numeric vector of length two or nothing for each covariate.
            Put it in a named list.", call. = FALSE)
     }
@@ -758,8 +760,9 @@ make_valid_prior_object <- function(data, args){
       covmat <- make_rw2_mat(n = length(unique(data$random[[non_iids[ind]]])), type = "cov")
       args$latent[[non_iids[ind]]]$scaling_factor <- typical_variance(covmat)
     } else if (mods[non_iids[ind]] == "generic0"){
-      index <- which(names(covmats) == names(covmats_input)[ind])
-      # covmat <- covmats[[non_iids[ind]]]
+      # browser()
+      # index <- which(names(covmats) == names(covmats_input)[ind])
+      index <- which(names(covmats_input) == names(covmats)[ind]) # maybe non_iids[ind] and not ind?
       covmat <- covmats_input[[index]]
     } else if (mods[non_iids[[ind]]] == "besag"){
       precmat <- make_besag_prec_mat(args$latent[[non_iids[[ind]]]]$graph)
@@ -777,7 +780,7 @@ make_valid_prior_object <- function(data, args){
     }
     new_covmat <- fix_size_covmat(covmat, covmats[[non_iids[ind]]], data$random[[non_iids[ind]]], names(covmats)[non_iids[ind]])
     # orig_covmats[[non_iids[ind]]] <- covmat/typical_variance(covmat)
-    covmats[[non_iids[ind]]] <- new_covmat/typical_variance(new_covmat)
+    covmats[[non_iids[ind]]] <- new_covmat/typical_variance(new_covmat) # maybe ind and non non_iids[ind]?
     # covmats[[non_iids[ind]]] <- covmat/typical_variance(covmat)
     if (mods[[non_iids[ind]]] == "generic0") which_covmats_structured <- c(which_covmats_structured, non_iids[ind])
   }
@@ -1215,7 +1218,6 @@ default_totvar <- function(family, n_comp){
 #' Graphical prior construction
 #'
 #' This functions opens a shiny app where the specified prior can be seen, and changed.
-#' Returns an invisible object,
 #'
 #' @param prior An object from \link[makemyprior]{make_prior}.
 #' @param guide Logical, whether to open the guide directly when the app is started. Default is \code{FALSE}. The guide
@@ -1231,10 +1233,11 @@ default_totvar <- function(family, n_comp){
 #'
 #' vignette("make_prior", package = "makemyprior")
 #'
-#' ex_prior <- makemyprior_example_model()
+#' }
 #'
-#' new_prior <- makemyprior_gui(ex_prior)
-#'
+#' if (interactive()){
+#'    ex_prior <- makemyprior_example_model()
+#'    new_prior <- makemyprior_gui(ex_prior)
 #' }
 #'
 #' @importFrom shinyjs useShinyjs disable disabled enable hideElement reset showElement
@@ -1242,11 +1245,11 @@ default_totvar <- function(family, n_comp){
 #' @export
 makemyprior_gui <- function(prior, guide = FALSE, no_pc = FALSE){
 
-  if (class(prior) %in% c("mmp_stan", "mmp_inla")) {
-    stop("This is a posterior object. Provide a prior object wiht class 'mmp_prior'.", call. = FALSE)
+  if (is(prior, "mmp_inla") || is(prior, "mmp_stan")) {
+    stop("This is a posterior object. Provide a prior object with class 'mmp_prior'.", call. = FALSE)
   }
 
-  if (class(prior) != "mmp_prior") stop("Provide an object with class 'mmp_prior'.", call. = FALSE)
+  if (!is(prior, "mmp_prior")) stop("Provide an object with class 'mmp_prior'.", call. = FALSE)
 
   initial_args <- prior$.initial_args
   initial_args$.indata$covmats <- prior$covmats
@@ -1254,8 +1257,8 @@ makemyprior_gui <- function(prior, guide = FALSE, no_pc = FALSE){
   initial_args$.no_pc <- no_pc
 
   if (!interactive()) {
-    warning("Can only run GUI in interactive session, and this is not an interactive session.")
-    return(NULL)
+    warning("Can only run GUI in interactive session, and this is not an interactive session. Returning the input.")
+    return(prior)
   }
 
   # run application
@@ -1282,13 +1285,6 @@ makemyprior_gui <- function(prior, guide = FALSE, no_pc = FALSE){
                      formula = prior$formula,
                      family = prior$family
                      ))
-
-  # if (length(old_prior) > 0 && identical(prior, res)){
-  #   res <- old_prior
-  #   class(res) <- class(old_prior)
-  # } else {
-  #   class(res) <- "mmp_prior"
-  # }
 
   class(res) <- "mmp_prior"
 
@@ -1339,7 +1335,8 @@ update_initial_args <- function(old_initial_args, prior_obj){
 #'   \item{\code{init}}{initial value of the model parameters on internal parameterization (log-variances and covariate coefficients)}
 #'   \item{\code{seed}}{seed value for random number generation}
 #' }
-#' See \link[rstan]{sampling} for more details.
+#' See \link[rstan]{sampling} for more details. Note that for inference with \code{stan}, the \code{Ntrials} argument must be included in the data object, and
+#' cannot be provided to this function.
 #' @keywords rstan
 #' @return A named list with a prior object (\code{prior}), a stan-object (\code{stan}) and some data stan requires (\code{stan_data}).
 #' @details We cannot sample from a Jeffreys' prior since it is improper.
@@ -1351,11 +1348,20 @@ update_initial_args <- function(old_initial_args, prior_obj){
 #'
 #' vignette("make_prior", package = "makemyprior")
 #'
-#' ex_prior <- makemyprior_example_model()
+#' }
 #'
+#' ex_prior <- makemyprior_example_model()
+#' if (interactive() && requireNamespace("rstan")){
+#'   posterior <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   plot(posterior)
+#' }
+#'
+#' \dontrun{
 #' posterior <- inference_stan(ex_prior, use_likelihood = TRUE, iter = 1e4, chains = 1, seed = 1)
 #' plot(posterior)
 #' }
+#'
 #'
 #' @export
 inference_stan <- function(prior_obj, use_likelihood = TRUE, print_prior = TRUE, path = NULL, ...){
@@ -1366,18 +1372,18 @@ inference_stan <- function(prior_obj, use_likelihood = TRUE, print_prior = TRUE,
 
   if (print_prior) {print_prior_choice_ranef(prior_obj); cat("\n")}
 
-  if (class(prior_obj) != "mmp_prior") stop("Provide a prior object from 'make_prior'.", call. = FALSE)
+  if (!is(prior_obj, "mmp_prior")) stop("Provide a prior object from 'make_prior'.", call. = FALSE)
 
   stan_data <- make_stan_data_object(prior_obj)
 
   if (is.null(path) && file.exists(paste0(tempdir(), "/full_file.rds"))){ # default in temporary location
     stan_mod <- try(readRDS(paste0(tempdir(), "/full_file.rds")))
-    if (class(stan_mod) == "try-error"){
+    if (is(stan_mod, "try-error")){
       stop("Compile the Stan-code by running 'compile_stan(save = TRUE).", call. = FALSE)
     }
   } else if (is.null(path) && file.exists(paste0(path.package("makemyprior"), "/full_file.rds"))){
     stan_mod <- try(readRDS(paste0(path.package("makemyprior"), "/full_file.rds")))
-    if (class(stan_mod) == "try-error"){
+    if (is(stan_mod,"try-error")){
       stop("Compile the Stan-code by running 'compile_stan(save = TRUE).", call. = FALSE)
     }
   } else {
@@ -1388,7 +1394,7 @@ inference_stan <- function(prior_obj, use_likelihood = TRUE, print_prior = TRUE,
                      "else the code is re-compiled everytime this function is used (which is a bit slow)."), call. = FALSE, immediate. = TRUE)
       stan_mod <- try(compile_stan(save = FALSE))
     }
-    if (class(stan_mod) == "try-error") stop("Something went wrong when compiling the Stan-code. See 'compile_stan'.", call. = FALSE)
+    if (is(stan_mod, "try-error")) stop("Something went wrong when compiling the Stan-code. See 'compile_stan'.", call. = FALSE)
   }
 
   if (!use_likelihood) stan_data$likelihood <- 0
@@ -1435,14 +1441,15 @@ inference_stan <- function(prior_obj, use_likelihood = TRUE, print_prior = TRUE,
 #' the file is saved in \code{tempdir()}.
 #' @param path Only used if file cannot be saved in the package folder. This is a path to a folder where the file
 #' is stored, do not specify a name for the file! (It will be called \code{"full_file.rds"}, and should not be changed.)
-#' This arguyment makes the \code{permanent} argument being ignored.
+#' This argument makes the \code{permanent} argument being ignored.
 #' @details Note that you will get a message saying something about integer division. The PC priors on variance proportions
 #' are represented by splines, and to evaluate them in Stan we look up values, and use integer division for this. This is
 #' not a problem.
 #' @return Returns the stan-model invisibly.
 #' @examples
-#' \dontrun{
-#' compile_stan(save = TRUE) # saving in tempdir()
+#'
+#' if (interactive() && requireNamespace("rstan")){
+#'   compile_stan(save = TRUE) # saving in tempdir()
 #' }
 #'
 #' @export
@@ -1773,7 +1780,6 @@ make_rw2_mat <- function(n, type = c("prec", "cov", "lower")){
 
 
 # making precision matrix for besag effect from graph file (must be on same format as required by INLA)
-# TODO: write how this file should look like in documentation!
 # input is the file path to the graph file
 make_besag_prec_mat <- function(graph_path){
 
@@ -2028,10 +2034,12 @@ make_subtree <- function(node_data, split_id){
 #'
 #' vignette("make_prior", package = "makemyprior")
 #'
-#' ex_prior <- makemyprior_example_model()
+#' }
 #'
-#' posterior <- inference_inla(ex_prior)
-#' plot(posterior)
+#' ex_prior <- makemyprior_example_model()
+#' if (interactive() && requireNamespace("INLA")){
+#'   posterior <- inference_inla(ex_prior)
+#'   plot(posterior)
 #' }
 #'
 #' @export
@@ -2044,7 +2052,7 @@ inference_inla <- function(prior_obj, use_likelihood = TRUE,
 
   if (print_prior) {print_prior_choice_ranef(prior_obj); cat("\n")}
 
-  if (class(prior_obj) != "mmp_prior") stop("Provide a prior object from 'make_prior'.", call. = FALSE)
+  if (!is(prior_obj, "mmp_prior")) stop("Provide a prior object from 'make_prior'.", call. = FALSE)
 
   # return only priors (on precision scale)
   if (use_likelihood == 0){
@@ -2065,7 +2073,7 @@ inference_inla <- function(prior_obj, use_likelihood = TRUE,
   generic0_mod_mats <- sapply(prior_obj$latent[sapply(prior_obj$latent, function(x) x$model == "generic0")], function(x) c(x$Cmatrix, x$label))
   if (length(generic0_mod_mats) > 0){
     for (ind in seq_len(ncol(generic0_mod_mats))){
-      if (class(try(eval(parse(text = generic0_mod_mats[1,ind]))[1], silent = TRUE)) == "try-error"){
+      if (is(try(eval(parse(text = generic0_mod_mats[1,ind]))[1], silent = TRUE), "try-error")){
         tmp <- prior_obj$covmats[names(prior_obj$covmats) == generic0_mod_mats[2, ind]] # this is now a list
         names(tmp) <- generic0_mod_mats[1, ind]
         tmp[[1]] <- MASS::ginv(tmp[[1]]) # to make precision matrix
@@ -2074,15 +2082,15 @@ inference_inla <- function(prior_obj, use_likelihood = TRUE,
     }
   }
 
-  inla_jpr_data <- make_inla_data_object(prior_obj)
+  input_args <- list(...)
+
+  inla_jpr_data <- make_inla_data_object(prior_obj, input_args)
 
   # replace jeffreys prior with gaussian prior on total variance if no likelihood
   if (!use_likelihood) {
     inla_jpr_data$totvar_prior_info[inla_jpr_data$totvar_prior_info[,1] == 1,1] <- 5
     inla_jpr_data$totvar_prior_numbers[inla_jpr_data$totvar_prior_numbers == 1] <- 5
   }
-
-  input_args <- list(...)
 
   if (!is.null(input_args$control.expert)){
     stop("You cannot provide the INLA::control.expert argument, it is used for making the joint prior.", call. = FALSE)
@@ -2209,7 +2217,9 @@ make_inla_formula <- function(prior_obj){
 
 
 # fixed effects can be a data.frame or a list
-make_inla_data_object <- function(prior_obj){
+make_inla_data_object <- function(prior_obj, input_args){
+
+  if (length(input_args) > 0 && length(input_args$Ntrials) > 0 && length(prior_obj$inference$Ntrials) == 0) prior_obj$inference_data$Ntrials <- input_args$Ntrials
 
   return(make_stan_data_object(prior_obj))
 
@@ -2264,9 +2274,11 @@ hd_dirichlet_prior_lpdf <- function(theta, m, weights_start, w_o, w_u, get_index
 #' expit
 #'
 #' Calculates inverse logit, exp(x)/(1+exp(x)) = 1/(1+exp(-x))
-#' @param x Real number
+#' @param x Real number, or vector of reals
 #' @return expit value
-#' @examples expit(2)
+#' @examples
+#' expit(2)
+#' expit(seq(-5, 5, 1))
 #'
 #' @export
 expit <- function(x) 1/(1+exp(-x))
@@ -2274,9 +2286,11 @@ expit <- function(x) 1/(1+exp(-x))
 #' logit
 #'
 #' Calculates logit, log(x/(1-x)) = log(x) - log(1-x)
-#' @param x Value between 0 and 1
+#' @param x Value between 0 and 1, or vector of such values
 #' @return logit value
-#' @examples logit(0.5)
+#' @examples
+#' logit(0.5)
+#' logit(seq(0, 1, 0.1))
 #'
 #' @export
 logit <- function(x) log(x/(1-x))
@@ -2757,7 +2771,7 @@ default_pc_prior_param <- function(family){
 ## prints random effect prior choices with text
 print_prior_choice_ranef <- function(prior_obj){
 
-  if (class(prior_obj) == "mmp_inla" || class(prior_obj) == "mmp_stan") prior_obj <- prior_obj$prior
+  if (is(prior_obj, "mmp_inla") || is(prior_obj, "mmp_stan")) prior_obj <- prior_obj$prior
 
   cat("Tree structure:", prior_obj$tree)
   cat("\n\n")
@@ -2784,7 +2798,7 @@ print_prior_choice_ranef <- function(prior_obj){
 ## prints fixed effect prior choices with text
 print_prior_choice_fixef <- function(prior_obj){
 
-  if (class(prior_obj) == "mmp_inla" || class(prior_obj) == "mmp_stan") prior_obj <- prior_obj$prior
+  if (is(prior_obj, "mmp_inla") || is(prior_obj, "mmp_stan")) prior_obj <- prior_obj$prior
 
   cat("Covariate priors: ")
   if (!prior_obj$use_intercept && nrow(prior_obj$prior_fixed) == 0) cat("No covariates.")
@@ -2834,13 +2848,18 @@ scale_precmat <- function(Q){
 #' @param ... For \code{mmp_stan} and \code{mmp_inla}, see \link[base]{print.data.frame}.
 #' @return Returns input object invisible.
 #' @examples
-#' \dontrun{
 #' pri <- makemyprior_example_model()
 #' pri # or print(pri)
-#' res_stan <- inference_stan(pri)
-#' res_stan # or print(res_stan)
-#' res_inla <- inference_inla(pri)
-#' res_inla # or print(res_inla)
+#'
+#' if (interactive() && requireNamespace("rstan")){
+#'   res_stan <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   res_stan # or print(res_stan)
+#' }
+#'
+#' if (interactive() && requireNamespace("INLA")){
+#'   res_inla <- inference_inla(pri)
+#'   res_inla # or print(res_inla)
 #' }
 #'
 #' @export
@@ -2906,13 +2925,18 @@ print.mmp_stan <- function(x, ...){
 #' @param ... For \code{mmp_stan} and \code{mmp_inla}, see \link[base]{print.data.frame}.
 #' @return Returns summary invisible.
 #' @examples
-#' \dontrun{
 #' pri <- makemyprior_example_model()
 #' summary(pri)
-#' res_stan <- inference_stan(pri)
-#' summary(res_stan)
-#' res_inla <- inference_inla(pri)
-#' summary(res_inla)
+#'
+#' if (interactive() && requireNamespace("rstan")){
+#'   res_stan <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   summary(res_stan)
+#' }
+#'
+#' if (interactive() && requireNamespace("INLA")){
+#'   res_inla <- inference_inla(pri)
+#'   summary(res_inla)
 #' }
 #'
 #' @export
@@ -2990,21 +3014,24 @@ summary.mmp_stan <- function(object, ...){
 #' \link[makemyprior]{plot_posterior_stan} (objects of class \code{mmp_stan}), and
 #' \link[makemyprior]{plot_posterior_variance} (objects of class \code{mmp_inla}),
 #' @examples
-#' \dontrun{
 #' pri <- makemyprior_example_model()
 #' plot(pri)
-#' res_stan <- inference_stan(pri)
-#' plot(res_stan)
-#' res_inla <- inference_inla(pri)
-#' plot(res_inla)
+#'
+#' if (interactive() && requireNamespace("rstan")){
+#'   res_stan <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   plot(res_stan)
+#' }
+#'
+#' if (interactive() && requireNamespace("INLA")){
+#'   res_inla <- inference_inla(pri)
+#'  plot(res_inla)
 #' }
 #'
 #' @export
 plot.mmp_prior <- function(x, ...){
 
   return(plot_prior(x))
-
-  invisible()
 
 }
 
@@ -3015,8 +3042,6 @@ plot.mmp_inla <- function(x, ...){
 
   return(plot_posterior_variance(x))
 
-  invisible()
-
 }
 
 #' @method plot mmp_stan
@@ -3025,8 +3050,6 @@ plot.mmp_inla <- function(x, ...){
 plot.mmp_stan <- function(x, ...){
 
   return(plot_posterior_stan(x, ...))
-
-  invisible()
 
 }
 
@@ -3095,6 +3118,7 @@ makemyprior_options_prior <- function(prs = NULL){
       ".",
       sep = ""
     )
+    cat("\n")
   } else {
     if (prs[1] == "all") prs <- c(priors_var$internal_name, priors_w$internal_name)
 
@@ -3164,6 +3188,7 @@ makemyprior_options_latent <- function(lts = NULL){
 
   if (is.null(lts)){
     cat("Latent models: ", paste0("\"", latent$internal_name, "\"", collapse = ", "), sep = "")
+    cat("\n")
   } else {
     if (lts[1] == "all") lts <- latent$internal_name
 
@@ -3208,6 +3233,7 @@ makemyprior_options_likelihood <- function(lks = NULL){
 
   if (is.null(lks)){
     cat("Likelihoods: ", paste0("\"", likelihoods$internal_name, "\"", collapse = ", "), sep = "")
+    cat("\n")
   } else {
     if (lks[1] == "all") lks <- likelihoods$internal_name
 
@@ -3267,10 +3293,10 @@ makemyprior_plotting <- function() help("makemyprior_plotting")
 #' @return An object of class \code{mmp_prior}.
 #' @details See example for what model is made.
 #' @examples
-#' \dontrun{
 #'
 #' ex_model <- makemyprior_example_model()
 #'
+#' \dontrun{
 #' # The function corresponds to the following model call:
 #'
 #' set.seed(1)

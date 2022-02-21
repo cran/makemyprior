@@ -20,10 +20,10 @@ Used in examples of other functions in the package.
 See example for what model is made.
 }
 \examples{
-\dontrun{
 
 ex_model <- makemyprior_example_model()
 
+\dontrun{
 # The function corresponds to the following model call:
 
 set.seed(1)

@@ -128,11 +128,11 @@ plot_pc_w_nocalc <- function(prior_data, node_data){
 # making data-frame for plotting prior or posteriors, or both for Stan
 make_dataframe_for_plotting <- function(type = c("prior", "posterior", "both"), res){
 
-  if (class(res) == "mmp_stan"){
+  if (is(res, "mmp_stan")){
     prior_obj <- res$prior
     res_stan <- res$stan
     stan_data <- res$stan_data
-  } else if (class(res) == "mmp_prior"){
+  } else if (is(res, "mmp_prior")){
     prior_obj <- res
     type <- "prior" # can only plot prior if that is the only object that is provided
   } else {
@@ -406,8 +406,8 @@ df_posterior_variances <- function(res, param = c("variance", "stdev", "precisio
 #' @export
 plot_tree_structure <- function(obj, nodenames){
 
-  if (class(obj) %in% c("mmp_inla", "mmp_stan")) obj <- obj$prior
-  if (!class(obj) == "mmp_prior") stop("Provide an object with class 'mmp_prior', 'mmp_stan' or 'mmp_inla'.", call. = FALSE)
+  if (is(obj, "mmp_inla") || is(obj, "mmp_stan")) obj <- obj$prior
+  if (!is(obj, "mmp_prior")) stop("Provide an object with class 'mmp_prior', 'mmp_stan' or 'mmp_inla'.", call. = FALSE)
 
   nd <- list(x = obj$node_data)
 
@@ -468,9 +468,9 @@ plot_tree_structure <- function(obj, nodenames){
 #' @export
 plot_prior <- function(obj){
 
-  if (class(obj) %in% c("mmp_stan", "mmp_inla")){
+  if (is(obj, "mmp_inla") || is(obj, "mmp_stan")){
     obj <- obj$prior
-  } else if (class(obj) != "mmp_prior") stop("Invalid input.", call. = FALSE)
+  } else if (!is(obj, "mmp_prior")) stop("Invalid input.", call. = FALSE)
 
   df <- make_dataframe_for_plotting("prior", obj)
 
@@ -508,19 +508,20 @@ plot_prior <- function(obj){
 #' @return A \link[ggplot2]{ggplot} with the posterior distributions.
 #' See also \link[makemyprior]{makemyprior_plotting}.
 #' @examples
-#' \dontrun{
 #'
-#' ex_prior <- makemyprior_example_model()
-#' res_stan <- inference_stan(ex_prior)
-#' plot_posterior_stan(res_stan)
 #'
+#' if (interactive() && requireNamespace("rstan")){
+#'   ex_prior <- makemyprior_example_model()
+#'   res_stan <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   plot_posterior_stan(res_stan)
 #' }
 #'
 #' @export
 plot_posterior_stan <- function(obj, param = c("prior", "variance", "stdev", "precision"), prior = FALSE){
 
-  if (class(obj) == "mmp_inla") stop("You cannot use a posterior fitted with inla for this function. Use 'plot_posterior_variance/stdev/precision' instead.", call. = FALSE)
-  if (class(obj) != "mmp_stan") stop("Invalid input.", call. = FALSE)
+  if (is(obj, "mmp_inla")) stop("You cannot use a posterior fitted with inla for this function. Use 'plot_posterior_variance/stdev/precision' instead.", call. = FALSE)
+  if (!is(obj, "mmp_stan")) stop("Invalid input.", call. = FALSE)
   param <- match.arg(param)
   if (param != "prior") prior <- FALSE
 
@@ -575,12 +576,12 @@ plot_posterior_stan <- function(obj, param = c("prior", "variance", "stdev", "pr
 #' @return A \link[ggplot2]{ggplot} with the posterior distributions.
 #' See also \link[makemyprior]{makemyprior_plotting}.
 #' @examples
-#' \dontrun{
 #'
-#' ex_prior <- makemyprior_example_model()
-#' res_stan <- inference_stan(ex_prior)
-#' plot_posterior_fixed(res_stan)
-#'
+#' if (interactive() && requireNamespace("rstan")){
+#'   ex_prior <- makemyprior_example_model()
+#'   res_stan <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   plot_posterior_fixed(res_stan)
 #' }
 #'
 #' @export
@@ -588,7 +589,7 @@ plot_posterior_fixed <- function(obj){
 
   df_post <- data.frame()
 
-  if (class(obj) == "mmp_stan"){
+  if (is(obj, "mmp_stan")){
 
     samps <- rstan::extract(obj$stan, c("intercept", "coeff"))
 
@@ -618,7 +619,7 @@ plot_posterior_fixed <- function(obj){
     # theme(strip.background = element_rect(fill = "#8E8D8A", color = gray(0.5)),
     #       strip.text = element_text(color = plot_text_color, size = 15))
 
-  } else if (class(obj) == "mmp_inla"){
+  } else if (is(obj, "mmp_inla")){
 
     if (obj$prior$use_intercept){
       df_post <- rbind(df_post,
@@ -663,20 +664,24 @@ plot_posterior_fixed <- function(obj){
 #' @return A \link[ggplot2]{ggplot} object with the plot
 #' See also \link[makemyprior]{makemyprior_plotting}.
 #' @examples
-#' \dontrun{
 #'
-#' ex_prior <- makemyprior_example_model()
-#' res_stan <- inference_stan(ex_prior)
-#' res_inla <- inference_inla(ex_prior)
-#' plot_posterior_variance(res_stan)
-#' plot_posterior_variance(res_inla)
+#' if (interactive() && requireNamespace("rstan")){
+#'   ex_prior <- makemyprior_example_model()
+#'   res_stan <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   plot_posterior_variance(res_stan)
+#' }
 #'
+#' if (interactive() && requireNamespace("INLA")){
+#'   ex_prior <- makemyprior_example_model()
+#'   res_inla <- inference_inla(ex_prior)
+#'   plot_posterior_variance(res_inla)
 #' }
 #'
 #' @export
 plot_posterior_variance <- function(obj){
 
-  if (class(obj) == "mmp_stan"){
+  if (is(obj, "mmp_stan")){
 
     df <- df_posterior_variances(obj, "variance")
     gg <- ggplot(df, aes(x = .data$x, y = .data$..density..)) + geom_histogram(col = gray(0.5), fill = "#8E8D8A", bins = 40) +
@@ -690,7 +695,7 @@ plot_posterior_variance <- function(obj){
       theme(strip.background = element_rect(fill = "white", color = gray(0.5)),
             strip.text = element_text(color = "black", size = 15))
 
-  } else if (class(obj) == "mmp_inla"){
+  } else if (is(obj, "mmp_inla")){
 
     df <- df_posteriors_inla(obj, "variance")
     gg <- ggplot() +
@@ -715,7 +720,7 @@ plot_posterior_variance <- function(obj){
 #' @export
 plot_posterior_stdev <- function(obj){
 
-  if (class(obj) == "mmp_stan"){
+  if (is(obj, "mmp_stan")){
 
     df <- df_posterior_variances(obj, "stdev")
     gg <- ggplot(df, aes(x = .data$x, y = .data$..density..)) + geom_histogram(col = gray(0.5), fill = "#8E8D8A", bins = 40) +
@@ -729,7 +734,7 @@ plot_posterior_stdev <- function(obj){
       theme(strip.background = element_rect(fill = "white", color = gray(0.5)),
             strip.text = element_text(color = "black", size = 15))
 
-  } else if (class(obj) == "mmp_inla"){
+  } else if (is(obj, "mmp_inla")){
 
     df <- df_posteriors_inla(obj, "stdev")
     gg <- ggplot() +
@@ -754,7 +759,7 @@ plot_posterior_stdev <- function(obj){
 #' @export
 plot_posterior_precision <- function(obj){
 
-  if (class(obj) == "mmp_stan"){
+  if (is(obj, "mmp_stan")){
 
     df <- df_posterior_variances(obj, "precision")
     gg <- ggplot(df, aes(x = .data$x, y = .data$..density..)) + geom_histogram(col = gray(0.5), fill = "#8E8D8A", bins = 40) +
@@ -767,7 +772,7 @@ plot_posterior_precision <- function(obj){
       theme(strip.background = element_rect(fill = "white", color = gray(0.5)),
             strip.text = element_text(color = "black", size = 15))
 
-  } else if (class(obj) == "mmp_inla"){
+  } else if (is(obj, "mmp_inla")){
 
     df <- df_posteriors_inla(obj, "precision")
     gg <- ggplot() +
@@ -797,18 +802,18 @@ plot_posterior_precision <- function(obj){
 #' @keywords posterior
 #' @return Returns a matrix with the posterior samples of the chosen effect
 #' @examples
-#' \dontrun{
 #'
-#' ex_prior <- makemyprior_example_model()
-#' res_stan <- inference_stan(ex_prior)
-#' extract_posterior_effect(res_stan, "a")
-#'
+#' if (interactive() && requireNamespace("rstan")){
+#'   ex_prior <- makemyprior_example_model()
+#'   res_stan <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   extract_posterior_effect(res_stan, "a")
 #' }
 #'
 #' @export
 extract_posterior_effect <- function(obj, effname){
 
-  if (class(obj) != "mmp_stan") stop("Input 'obj' must be of class 'mmp_stan'.", call. = FALSE)
+  if (!is(obj, "mmp_stan")) stop("Input 'obj' must be of class 'mmp_stan'.", call. = FALSE)
 
   if (!effname %in% names(obj$prior$data$random)) stop(paste0("The random effect ", effname, " is not in the model."), call. = FALSE)
 
@@ -837,22 +842,23 @@ extract_posterior_effect <- function(obj, effname){
 #' @return Returns a vector with the posterior samples of the chosen parameter, on variance scale for
 #' variances parameters and original (the common) scale for fixed effect coefficients
 #' @examples
-#' \dontrun{
 #'
-#' ex_prior <- makemyprior_example_model()
-#' res_stan <- inference_stan(ex_prior)
-#' extract_posterior_parameter(res_stan, "intercept")
-#' extract_posterior_parameter(res_stan, "a")
+#' if (interactive() && requireNamespace("rstan")){
+#'   ex_prior <- makemyprior_example_model()
+#'   res_stan <- inference_stan(ex_prior, iter = 100)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   extract_posterior_parameter(res_stan, "intercept")
+#'   extract_posterior_parameter(res_stan, "a")
 #' }
 #'
 #' @export
 extract_posterior_parameter <- function(obj, param){
 
-  if (class(obj) != "mmp_stan") stop("Input 'obj' must be of class 'mmp_stan'.", call. = FALSE)
+  if (!is(obj, "mmp_stan")) stop("Input 'obj' must be of class 'mmp_stan'.", call. = FALSE)
 
   if (param == "intercept"){
     if (obj$prior$use_intercept){
-      return(rstan::extract(obj$stan, "intercept")$intercept)
+      return(c(rstan::extract(obj$stan, "intercept")$intercept))
     } else {
       stop("This model has no intercept.", call. = FALSE)
     }
@@ -890,18 +896,21 @@ extract_posterior_parameter <- function(obj, param){
 #' but the variance proportions will be correct.
 #' See also \link[makemyprior]{makemyprior_plotting}.
 #' @examples
-#' \dontrun{
 #'
-#' ex_prior <- makemyprior_example_model()
-#' res_stan <- inference_stan(ex_prior)
-#' extract_posterior_variance(res_stan, "a")
+#' if (interactive() && requireNamespace("rstan")){
+#'   ex_prior1 <- makemyprior_example_model(seed = 1)
+#'   ex_prior2 <- makemyprior_example_model(seed = 2)
+#'   # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+#'   res_stan1 <- inference_stan(ex_prior1, iter = 100)
+#'   res_stan2 <- inference_stan(ex_prior2, iter = 100)
+#'   plot_several_posterior_stan(list(One = res_stan1, Two = res_stan2))
 #' }
 #'
 #' @export
 plot_several_posterior_stan <- function(objs, param = c("prior", "variance", "stdev", "precision", "logvariance")){
 
-  if (class(objs) != "list" || any(is.null(names(objs)))) stop("Provide a named list with objects from 'inference_stan'.", call. = FALSE)
-  if (any(sapply(objs, class) != "mmp_stan")) stop("The list 'objs' must consist of objects from 'inference_stan'.", call. = FALSE)
+  if (!is(objs, "list") || any(is.null(names(objs)))) stop("Provide a named list with objects from 'inference_stan'.", call. = FALSE)
+  if (!all(sapply(objs, is, class2 = "mmp_stan"))) stop("The list 'objs' must consist of objects from 'inference_stan'.", call. = FALSE)
   param <- match.arg(param)
 
   df <- data.frame()
@@ -951,7 +960,7 @@ plot_several_posterior_stan <- function(objs, param = c("prior", "variance", "st
 # extracting some posterior values from stan object
 make_posterior_summary_stan <- function(res){
 
-  if (class(res) != "mmp_stan") stop("An object of class 'mmp_stan' must be provided.", call. = FALSE)
+  if (!is(res, "mmp_stan")) stop("An object of class 'mmp_stan' must be provided.", call. = FALSE)
 
   prior_obj <- res$prior
 
@@ -1056,7 +1065,7 @@ make_posterior_summary_stan <- function(res){
 # extracting some posterior values from inla object
 make_posterior_summary_inla <- function(res){
 
-  if (class(res) != "mmp_inla") stop("An object of class 'mmp_inla' must be provided.", call. = FALSE)
+  if (!is(res, "mmp_inla")) stop("An object of class 'mmp_inla' must be provided.", call. = FALSE)
 
   prior_obj <- res$prior
 
@@ -1108,9 +1117,9 @@ make_posterior_summary_inla <- function(res){
 #' @export
 plot_marginal_prior <- function(x, obj, param, sd = FALSE){
 
-  if (class(obj) %in% c("mmp_stan", "mmp_inla")){
+  if (is(obj, "mmp_inla") || is(obj, "mmp_stan")){
     obj <- obj$prior
-  } else if (class(obj) != "mmp_prior") stop("Invalid input 'obj'.", call. = FALSE)
+  } else if (!is(obj, "mmp_prior")) stop("Invalid input 'obj'.", call. = FALSE)
 
   df <- make_dataframe_for_plotting("prior", obj)
   df <- data.frame()
@@ -1194,7 +1203,7 @@ plot_marginal_prior <- function(x, obj, param, sd = FALSE){
 #' @export
 eval_pc_prior <- function(x, obj, param, logitscale = FALSE){
 
-  if (class(obj) != "mmp_prior") stop("Invalid input 'obj'.", call. = FALSE)
+  if (!is(obj, "mmp_prior")) stop("Invalid input 'obj'.", call. = FALSE)
 
   if (substr(param, 1, 2) == "w[") param <- substr(param, 3, nchar(param)-1)
 

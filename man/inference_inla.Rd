@@ -40,10 +40,12 @@ but the variance proportions will be correct.
 
 vignette("make_prior", package = "makemyprior")
 
-ex_prior <- makemyprior_example_model()
+}
 
-posterior <- inference_inla(ex_prior)
-plot(posterior)
+ex_prior <- makemyprior_example_model()
+if (interactive() && requireNamespace("INLA")){
+  posterior <- inference_inla(ex_prior)
+  plot(posterior)
 }
 
 }

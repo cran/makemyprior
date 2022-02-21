@@ -68,7 +68,7 @@ but include code so the user can run the inference themselves.
 We do not want to say anything about the total (also called phenotypic) variance.
 We have expert knowledge saying that we want shrinkage towards the residual effect to avoid overfitting, and the
 heritability, which is the amount of phenotypic variance attributed to the genetic effects, is around 0.25.
-The additive, dominance and epistasis effects get about (85, 10, 5)\% of the genetic variance accourding to the expert.
+The additive, dominance and epistasis effects get about (85, 10, 5)\% of the genetic variance according to the expert.
 The expert is quite sure about these choices, and we use a concentration parameter $c$, saying how much of the density mass of the prior such that 
 $\mathrm{Prob}(\mathrm{logit}(1/4) < \mathrm{logit}(\omega_*) - \mathrm{logit}(m) < \mathrm{logit}(3/4)) = c$ for a variance proportion $\omega_*$.
 

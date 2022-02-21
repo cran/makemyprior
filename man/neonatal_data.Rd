@@ -26,22 +26,37 @@ Simulated neonatal mortality data with 323 observations.
 
 vignette("neonatal_mortaily", package = "makemyprior")
 
-graph_path <- paste0(path.package("makemyprior"), "/neonatal.graph")
+}
 
-formula <- y ~ urban + mc(nu) + mc(v) +
-  mc(u, model = "besag", graph = graph_path, scale.model = TRUE)
+if (interactive() && requireNamespace("rstan")){
 
-set.seed(1)
-find_pc_prior_param(lower = 0.1, upper = 10, prob = 0.9, N = 2e5)
+  graph_path <- paste0(path.package("makemyprior"), "/neonatal.graph")
 
-prior <- make_prior(
-  formula, neonatal_data, family = "binomial",
-  prior = list(tree = "s1 = (u, v); s2 = (s1, nu)",
-               w = list(s1 = list(prior = "pc0", param = 0.25),
-                        s2 = list(prior = "pc1", param = 0.75)),
-               V = list(s2 = list(prior = "pc",
-                                  param = c(3.35, 0.05)))))
+  formula <- y ~ urban + mc(nu) + mc(v) +
+    mc(u, model = "besag", graph = graph_path, scale.model = TRUE)
 
+  set.seed(1)
+  find_pc_prior_param(lower = 0.1, upper = 10, prob = 0.9, N = 2e5)
+
+  prior <- make_prior(
+    formula, neonatal_data, family = "binomial",
+    prior = list(tree = "s1 = (u, v); s2 = (s1, nu)",
+                 w = list(s1 = list(prior = "pc0", param = 0.25),
+                          s2 = list(prior = "pc1", param = 0.75)),
+                 V = list(s2 = list(prior = "pc",
+                                    param = c(3.35, 0.05)))))
+
+  posterior <- inference_stan(prior, iter = 150, warmup = 50,
+                              seed = 1, init = "0", chains = 1)
+  # Note: For reliable results, increase the number of iterations
+
+  plot(prior)
+  plot_tree_structure(prior)
+  plot_posterior_fixed(posterior)
+  plot_posterior_stan(posterior, param = "prior", prior = TRUE)
+}
+
+\dontrun{
 posterior <- inference_stan(prior, iter = 15000, warmup = 5000,
                             seed = 1, init = "0", chains = 1)
 

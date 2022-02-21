@@ -1,7 +1,5 @@
 
 
-require(shiny)
-require(shinyjs)
 
 ui <- fluidPage(
 
@@ -108,7 +106,7 @@ ui <- fluidPage(
              uiOutput("begin_quit_guide"),
              actionButton("reset", "Reset", style = "width:70px", class = "button1", title = "Reset everything to the settings you started with."),
              actionButton("close", "Close", style = "width:70px", class = "button1", title = "Close application. The application stores your settings when closing. You can also just close the window, this will still save your settings.")
-             # actionButton("close_and_run", "Close and run", style = "width:140px", class = "button1", title = "Close application and start inference with INLA immidiately.")
+             # actionButton("close_and_run", "Close and run", style = "width:140px", class = "button1", title = "Close application and start inference with INLA immediately.")
            )
 
     ), # end sidebarpanel

@@ -33,7 +33,8 @@ stored somewhere else than in the package directory or tempdir()}
   \item{\code{init}}{initial value of the model parameters on internal parameterization (log-variances and covariate coefficients)}
   \item{\code{seed}}{seed value for random number generation}
 }
-See \link[rstan]{sampling} for more details.}
+See \link[rstan]{sampling} for more details. Note that for inference with \code{stan}, the \code{Ntrials} argument must be included in the data object, and
+cannot be provided to this function.}
 }
 \value{
 A named list with a prior object (\code{prior}), a stan-object (\code{stan}) and some data stan requires (\code{stan_data}).
@@ -53,11 +54,20 @@ but the variance proportions will be correct.
 
 vignette("make_prior", package = "makemyprior")
 
-ex_prior <- makemyprior_example_model()
+}
 
+ex_prior <- makemyprior_example_model()
+if (interactive() && requireNamespace("rstan")){
+  posterior <- inference_stan(ex_prior, iter = 100)
+  # Note: For reliable results, increase the number of iterations (e.g., 'iter = 2000')
+  plot(posterior)
+}
+
+\dontrun{
 posterior <- inference_stan(ex_prior, use_likelihood = TRUE, iter = 1e4, chains = 1, seed = 1)
 plot(posterior)
 }
+
 
 }
 \keyword{rstan}
