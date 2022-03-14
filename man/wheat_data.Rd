@@ -22,7 +22,6 @@ Simulated wheat yield data with 100 observations.
 \dontrun{
 
 vignette("wheat_breeding", package = "makemyprior")
-
 }
 
 if (interactive() && requireNamespace("rstan")){
@@ -55,6 +54,7 @@ if (interactive() && requireNamespace("rstan")){
 }
 
 \dontrun{
+
 posterior <- inference_stan(prior, iter = 150, warmup = 50,
                             chains = 1, seed = 1)
 

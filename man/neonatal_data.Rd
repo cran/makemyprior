@@ -25,7 +25,6 @@ Simulated neonatal mortality data with 323 observations.
 \dontrun{
 
 vignette("neonatal_mortaily", package = "makemyprior")
-
 }
 
 if (interactive() && requireNamespace("rstan")){
@@ -57,6 +56,7 @@ if (interactive() && requireNamespace("rstan")){
 }
 
 \dontrun{
+
 posterior <- inference_stan(prior, iter = 15000, warmup = 5000,
                             seed = 1, init = "0", chains = 1)
 

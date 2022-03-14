@@ -14,7 +14,6 @@
 #' \dontrun{
 #'
 #' vignette("wheat_breeding", package = "makemyprior")
-#'
 #' }
 #'
 #' if (interactive() && requireNamespace("rstan")){
@@ -47,6 +46,7 @@
 #' }
 #'
 #' \dontrun{
+#'
 #' posterior <- inference_stan(prior, iter = 150, warmup = 50,
 #'                             chains = 1, seed = 1)
 #'
@@ -76,7 +76,6 @@
 #' \dontrun{
 #'
 #' vignette("latin_square", package = "makemyprior")
-#'
 #' }
 #'
 #' if (interactive() && requireNamespace("rstan")){
@@ -103,6 +102,7 @@
 #' }
 #'
 #' \dontrun{
+#'
 #' posterior <- inference_stan(prior, iter = 15000, warmup = 5000,
 #'                             seed = 1, init = "0", chains = 1)
 #'
@@ -132,7 +132,6 @@
 #' \dontrun{
 #'
 #' vignette("neonatal_mortaily", package = "makemyprior")
-#'
 #' }
 #'
 #' if (interactive() && requireNamespace("rstan")){
@@ -164,6 +163,7 @@
 #' }
 #'
 #' \dontrun{
+#'
 #' posterior <- inference_stan(prior, iter = 15000, warmup = 5000,
 #'                             seed = 1, init = "0", chains = 1)
 #'

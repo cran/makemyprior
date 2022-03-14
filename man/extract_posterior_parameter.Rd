@@ -10,7 +10,7 @@ extract_posterior_parameter(obj, param)
 \item{obj}{An object from \code{inference_stan}.}
 
 \item{param}{Name of the variance parameter, which is the same as the name of the corresponding
-fixed or random effect in the data. Intercept is denoted 'intercept'.}
+fixed or random effect in the data. Intercept is denoted 'intercept', and residual variance is denoted 'eps'.}
 }
 \value{
 Returns a vector with the posterior samples of the chosen parameter, on variance scale for

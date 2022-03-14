@@ -17,7 +17,7 @@ Creating a simple prior object using \link[makemyprior]{make_prior}.
 Used in examples of other functions in the package.
 }
 \details{
-See example for what model is made.
+See the example for what model is made.
 }
 \examples{
 

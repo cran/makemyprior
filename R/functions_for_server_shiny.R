@@ -1377,7 +1377,7 @@ get_prior_expr <- function(prior_data, node_data, param = c("cw", "totvar", "wei
   if (param == "cw"){
 
     if (prior_data$prior == "pc0") {
-      param_name <- sprintf("\\sigma_{%s}", gsub("_", "\\_", prior_data$name, fixed = TRUE), "}")
+      param_name <- sprintf("\\sigma_{%s}", gsub("_", "\\_", prior_data$name, fixed = TRUE)) #, "}")
       prior_expr <- sprintf("\\mathrm{PC}_{\\mathrm{0}}(%s, %s)", prior_data$param[1], prior_data$param[2])
     } else if (prior_data$prior == "jeffreys"){
       param_name <- sprintf("\\sigma_{%s}^2", gsub("_", "\\_", prior_data$name, fixed = TRUE))
@@ -1386,7 +1386,7 @@ get_prior_expr <- function(prior_data, node_data, param = c("cw", "totvar", "wei
       param_name <- sprintf("\\sigma_{%s}^2", gsub("_", "\\_", prior_data$name, fixed = TRUE))
       prior_expr <- paste0("\\mathrm{InvGam}(", prior_data$param[1], ",", prior_data$param[2], ")")
     } else if (prior_data$prior == "hc"){
-      param_name <- sprintf("\\sigma_{%s}", gsub("_", "\\_", prior_data$name, fixed = TRUE), "}")
+      param_name <- sprintf("\\sigma_{%s}", gsub("_", "\\_", prior_data$name, fixed = TRUE)) #, "}")
       prior_expr <- paste0("\\mathrm{HC}(", prior_data$param[1], ")")
     }
 

@@ -9,13 +9,13 @@ extract_posterior_effect(obj, effname)
 \arguments{
 \item{obj}{An object from \code{inference_stan}.}
 
-\item{effname}{Name of the effect, same name as in the data.}
+\item{effname}{Name of the random effect, same name as in the data.}
 }
 \value{
 Returns a matrix with the posterior samples of the chosen effect
 }
 \description{
-#' Extract the posterior of a random effect in the model for inference done with Stan
+Extract the posterior of a random effect in the model for inference done with Stan
 }
 \examples{
 

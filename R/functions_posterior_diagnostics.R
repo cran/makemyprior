@@ -796,9 +796,9 @@ plot_posterior_precision <- function(obj){
 
 #' Extract the posterior of a random effect
 #'
-#' #' Extract the posterior of a random effect in the model for inference done with Stan
+#' Extract the posterior of a random effect in the model for inference done with Stan
 #' @param obj An object from \code{inference_stan}.
-#' @param effname Name of the effect, same name as in the data.
+#' @param effname Name of the random effect, same name as in the data.
 #' @keywords posterior
 #' @return Returns a matrix with the posterior samples of the chosen effect
 #' @examples
@@ -837,7 +837,7 @@ extract_posterior_effect <- function(obj, effname){
 #'
 #' @param obj An object from \code{inference_stan}.
 #' @param param Name of the variance parameter, which is the same as the name of the corresponding
-#' fixed or random effect in the data. Intercept is denoted 'intercept'.
+#' fixed or random effect in the data. Intercept is denoted 'intercept', and residual variance is denoted 'eps'.
 #' @keywords posterior
 #' @return Returns a vector with the posterior samples of the chosen parameter, on variance scale for
 #' variances parameters and original (the common) scale for fixed effect coefficients
@@ -1192,7 +1192,7 @@ plot_marginal_prior <- function(x, obj, param, sd = FALSE){
 #' @param param Which weight to plot, indicated using syntax shown when printing (do not need to include the
 #' \code{w[..]} part to indicate that it is a variance proportion, but can be included). Print the prior object
 #' to see syntax for each weight.
-#' @param logitscale Return prior on logitscale? (default \code{FALSE}).
+#' @param logitscale Is the input \code{x} on logit-scale? (default \code{FALSE}).
 #' @return Returns density for the given variance proportion.
 #' @examples
 #' ex_prior <- makemyprior_example_model()

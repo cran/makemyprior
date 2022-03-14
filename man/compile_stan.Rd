@@ -30,8 +30,8 @@ already pre-compiled.
 }
 \details{
 Note that you will get a message saying something about integer division. The PC priors on variance proportions
-are represented by splines, and to evaluate them in Stan we look up values, and use integer division for this. This is
-not a problem.
+are represented by splines, and to evaluate them in Stan we look up values, and use integer division for this. This does
+not cause problems.
 }
 \examples{
 

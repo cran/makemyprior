@@ -1322,11 +1322,11 @@ update_initial_args <- function(old_initial_args, prior_obj){
 #' @param prior_obj An object from \link[makemyprior]{make_prior}, from \link[makemyprior]{makemyprior_gui},
 #' from \link[makemyprior]{inference_stan}, or from \link[makemyprior]{inference_inla} (for refitting model)
 #' @param use_likelihood Whether to sample from the prior only (\code{FALSE}, can be used for e.g.
-#' debugging or to look at the priors on variance parameters when using an HD prior), or
+#' debugging or to look at the priors on variance parameters when using an HD prior, see also Details), or
 #' to use the likelihood and data to get the posterior (\code{TRUE}, default).
 #' @param print_prior Whether to print a text with the chosen prior or not (default \code{TRUE})
 #' @param path Path to folder. See \link[makemyprior]{compile_stan}. Only necessary if compiled code is
-#' stored somewhere else than in the package directory or tempdir()
+#' stored somewhere else than in \code{tempdir()} or the package directory (checking \code{tempdir()} first).
 #' @param ... Other arguments to be sent to \link[rstan]{sampling}. Useful arguments include:
 #' \describe{
 #'   \item{\code{iter}}{number of iterations for each chain (including burn-in, 2000 is the default)}
@@ -1340,14 +1340,14 @@ update_initial_args <- function(old_initial_args, prior_obj){
 #' @keywords rstan
 #' @return A named list with a prior object (\code{prior}), a stan-object (\code{stan}) and some data stan requires (\code{stan_data}).
 #' @details We cannot sample from a Jeffreys' prior since it is improper.
-#' If Jeffreys' prior is used for the total variance, the prior will be changed to a Gaussian(0,1) prior on
+#' If \code{use_likelihood = FALSE} and Jeffreys' prior is used for the total variance, the prior will be changed to a Gaussian(0,1) prior on
 #' the log total variance. This means that it does not make sense to look at the variances/standard deviations/precisions,
-#' but the variance proportions will be correct.
+#' but the variance proportions will be correct. Note that this is only an issue when sampling from the prior
+#' (i.e., not using the likelihood).
 #' @examples
 #' \dontrun{
 #'
 #' vignette("make_prior", package = "makemyprior")
-#'
 #' }
 #'
 #' ex_prior <- makemyprior_example_model()
@@ -1358,6 +1358,7 @@ update_initial_args <- function(old_initial_args, prior_obj){
 #' }
 #'
 #' \dontrun{
+#'
 #' posterior <- inference_stan(ex_prior, use_likelihood = TRUE, iter = 1e4, chains = 1, seed = 1)
 #' plot(posterior)
 #' }
@@ -1443,8 +1444,8 @@ inference_stan <- function(prior_obj, use_likelihood = TRUE, print_prior = TRUE,
 #' is stored, do not specify a name for the file! (It will be called \code{"full_file.rds"}, and should not be changed.)
 #' This argument makes the \code{permanent} argument being ignored.
 #' @details Note that you will get a message saying something about integer division. The PC priors on variance proportions
-#' are represented by splines, and to evaluate them in Stan we look up values, and use integer division for this. This is
-#' not a problem.
+#' are represented by splines, and to evaluate them in Stan we look up values, and use integer division for this. This does
+#' not cause problems.
 #' @return Returns the stan-model invisibly.
 #' @examples
 #'
@@ -2013,9 +2014,9 @@ make_subtree <- function(node_data, split_id){
 #' You must have INLA installed to run this. INLA can be installed with:
 #' \code{install.packages("INLA", repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/stable"), dep = TRUE)}.
 #' Also see \href{https://www.r-inla.org/}{r-inla.org}.
-#' @param prior_obj An object from \link[makemyprior]{make_prior}, from \link[makemyprior]{makemyprior_gui}
-#' (both with and without the "Close and run" option), from \link[makemyprior]{inference_stan}, or from \link[makemyprior]{inference_inla} (for refitting model)
-#' @param use_likelihood Whether to sample from the prior only (FALSE, can be used for e.g. debugging or to look at the priors on variance parameters when using an HD prior), or to use the likelihood and data to get the posterior (TRUE, default).
+#' @param prior_obj An object from \link[makemyprior]{make_prior}, from \link[makemyprior]{makemyprior_gui}, from \link[makemyprior]{inference_stan}, or from \link[makemyprior]{inference_inla} (for refitting model)
+#' @param use_likelihood Whether to sample from the prior only (FALSE, can be used for e.g. debugging or to look at the priors on variance parameters when using an HD prior,
+#' see also Details), or to use the likelihood and data to get the posterior (TRUE, default).
 #' @param print_prior Whether to print a text with the chosen prior or not (default TRUE)
 #' @param ... Other values to be sent to INLA.
 #' Useful arguments include \code{Ntrials} for the binomial likelihood.
@@ -2024,16 +2025,15 @@ make_subtree <- function(node_data, split_id){
 #' Can be anything sent to \link[INLA]{inla} except for \code{control.expert} and arguments that specify priors.
 #' @keywords INLA
 #' @return A named list with a prior object (\code{prior}), an inla-object (\code{inla}) and some data inla requires (\code{inla_data}).
-#' @details We cannot sample from a Jeffreys' prior since it is improper.
-#' If Jeffreys' prior is used for the total variance, the prior will be changed to a Gaussian(0,1) prior on
+#' @details Jeffreys' prior is improper. If \code{use_likelihood = FALSE} and Jeffreys' prior is used for the total variance, the prior will be changed to a Gaussian(0,1) prior on
 #' the log total variance. This means that it does not make sense to look at the variances/standard deviations/precisions,
-#' but the variance proportions will be correct.
+#' but the variance proportions will be correct. Note that this is only an issue when sampling from the prior
+#' (i.e., not using the likelihood).
 #' @export
 #' @examples
 #' \dontrun{
 #'
 #' vignette("make_prior", package = "makemyprior")
-#'
 #' }
 #'
 #' ex_prior <- makemyprior_example_model()
@@ -2316,7 +2316,9 @@ hd_pc_prior_lpdf <- function(theta, weights_start, idx, w_o, knots, prior_coeffs
   logdens <- logdens + eval_spline_lpdf(logitw, knots, prior_coeffs, idx, n_knots)
 
   # jacobian from logit weight to weight
-  logdens <- logdens -log( expit(logitw)*(1-expit(logitw)) )
+  # logdens <- logdens -log( expit(logitw)*(1-expit(logitw)) )
+  logdens <- logdens -(logitw - 2*log1p(exp(logitw))) # more numerically stable for very small and very large numbers
+
 
   return(logdens)
 
@@ -2428,9 +2430,9 @@ joint_prior <- function(theta_prec){
   args_123ysg35ovat <- args_123ysg35ovat # hack to avoid note about variable not existing
   args_123 <- args_123ysg35ovat # weird name to avoid problems with global environment
 
-  # if Gaussian likelihood, put residual variance at the end, and transform from log precision to log variance
+  # transform from log precision to log variance
+  # if Gaussian likelihood, put residual variance at the end
   theta <- if (args_123$add_res == 1) -c(theta_prec[-1], theta_prec[1]) else -theta_prec
-  # theta <- -theta_prec[c(2:length(theta_prec), 1)]
 
   logdens <- 0
 
@@ -3279,7 +3281,8 @@ makemyprior_options_likelihood <- function(lks = NULL){
 #'   \item{\link[makemyprior]{extract_posterior_parameter}}
 #' }
 #'
-#' \link[makemyprior]{eval_pc_prior} can be used to evaluate a PC prior for a weight parameter.
+#' \link[makemyprior]{eval_pc_prior} can be used to evaluate a PC prior for a weight parameter,
+#' and \link[makemyprior]{eval_joint_prior} to evaluate the whole joint prior.
 #'
 #' @export
 makemyprior_plotting <- function() help("makemyprior_plotting")
@@ -3291,7 +3294,7 @@ makemyprior_plotting <- function() help("makemyprior_plotting")
 #' Used in examples of other functions in the package.
 #' @param seed A seed value for reproducing the data (default \code{seed = 1}).
 #' @return An object of class \code{mmp_prior}.
-#' @details See example for what model is made.
+#' @details See the example for what model is made.
 #' @examples
 #'
 #' ex_model <- makemyprior_example_model()
@@ -3338,6 +3341,174 @@ makemyprior_example_model <- function(seed = 1){
   return(prior)
 
 }
+
+
+
+
+#' Evaluate the joint variance prior
+#'
+#' Function for evaluating the joint variance prior stored in \code{prior_obj}. To compute the joint prior, the functions needs
+#' to know the transformation from the total variance/variance proportion scale to log-variance scale.
+#' This is computed before inference, but is not stored in the \code{mmp_prior}-object.
+#' To avoid having to recompute this for every evaluation and thus improve the speed, we make a condensed data object with
+#' the function \link[makemyprior]{make_eval_prior_data}.
+#' @param prior_obj Object of class \code{mmp_prior}, see \link[makemyprior]{make_prior}.
+#' @param theta Vector of log variances. The order of the log variances is
+#' the same as specified in the formula, with the residual variance at the end for a Gaussian likelihood. To be sure,
+#' you can use \link[makemyprior]{get_parameter_order} to check the order.
+#' @param prior_data An object from \link[makemyprior]{make_eval_prior_data}.
+#' @return Logarithm of the prior density
+#' @details Note that a Jeffreys' prior is improper and sampling with the prior only will not work when it
+#' is used. For sampling from the prior (for example for debugging), use a proper prior for all parameters instead.
+#'
+#' The
+#' \code{make_eval_prior_data} function is used to create a condensed version of the prior object from
+#' \code{make_prior}, that only contains what is needed to compute the joint prior. Since the HD prior is chosen on
+#' total variances and variance proportions, some additional information is needed
+#' to compute the Jacobian for the joint prior. To improve the speed, we do this once before evaluating the prior.
+#' @examples
+#'
+#' ex_model <- makemyprior_example_model()
+#' get_parameter_order(ex_model) # a, b, eps
+#' prior_data <- make_eval_prior_data(ex_model)
+#' eval_joint_prior(c(0, 0, 0), prior_data)
+#' eval_joint_prior(c(-1, 0, 1), prior_data)
+#'
+#' # a model with only 2 variance parameters
+#' if (interactive()){
+#'
+#'   data <- list(
+#'     a = rep(1:10, each = 10)
+#'   )
+#'   set.seed(1); data$y <- rnorm(10, 0, 0.4)[data$a] + rnorm(100, 0, 1)
+#'
+#'   # random intercept model
+#'   ex_model2 <- make_prior(y ~ mc(a), data, family = "gaussian",
+#'                           prior = list(tree = "s2 = (a, eps)",
+#'                                        w = list(s2 = list(prior = "pc0", param = 0.25)),
+#'                                        V = list(s2 = list(prior = "pc", param = c(3, 0.05)))),
+#'                           intercept_prior = c(0, 1000))
+#'
+#'   prior_data2 <- make_eval_prior_data(ex_model2)
+#'   # evaluating the prior in a grid
+#'   theta_a <- seq(-8, 4, 0.1)
+#'   theta_eps <- seq(-8, 4, 0.1)
+#'   res <- matrix(nrow = 0, ncol = 3)
+#'   for (ind in 1:length(theta_a)){
+#'     for (jnd in 1:length(theta_eps)){
+#'       res <- rbind(res, c(theta_a[ind], theta_eps[jnd],
+#'                           eval_joint_prior(c(theta_a[ind], theta_eps[jnd]), prior_data2)))
+#'     }
+#'   }
+#'
+#'   # graph showing the prior
+#'   if (requireNamespace("ggplot2")){
+#'     res2 <- as.data.frame(res)
+#'     names(res2) <- c("x", "y", "z")
+#'     # Note from the "exp(z)" that we use the posterior, and not log posterior, in this plot
+#'     ggplot(res2, aes(x = x, y = y, z = exp(z), fill = exp(z))) +
+#'       geom_raster() +
+#'       geom_contour(color = "black") +
+#'       scale_fill_viridis_c(option = "E") +
+#'       xlab("Log variance of 'a'") +
+#'       ylab("Log residual variance") +
+#'       labs(fill = "Density") +
+#'       theme_bw()
+#'   }
+#'
+#' }
+#'
+#' @export
+eval_joint_prior <- function(theta, prior_data){
+
+  if (is(prior_data, "mmp_prior")) stop("Use 'make_eval_prior_data()' and send the result to this function. See ?eval_joint_prior.", call. = FALSE)
+
+  logdens <- 0
+
+  for (indV in seq_len(prior_data$n_totvar)){
+    logdens <- logdens + hd_prior_joint_lpdf(
+      theta[get_indexes(prior_data$which_theta_in_hd[indV,])],
+      prior_data$likelihood,
+      prior_data$which_pc,
+      prior_data$w_o[,get_indexes(prior_data$which_theta_in_hd[indV,])],
+      prior_data$w_u[,get_indexes(prior_data$which_theta_in_hd[indV,])],
+      prior_data$n_splits_each_tree[indV],
+      get_indexes(prior_data$row_index_hd_pr[indV,]),
+      prior_data$knots,
+      prior_data$prior_coeffs,
+      prior_data$n_knots,
+      prior_data$totvar_prior_info,
+      indV,
+      # sending the functions here, since we do this for INLA and re-using the same functions
+      # reduces the possibilities for errors at a later stage
+      choose_prior_lpdf,
+      hd_dirichlet_prior_lpdf,
+      hd_pc_prior_lpdf,
+      calc_jac_logdet,
+      get_indexes,
+      get_indexes2,
+      get_dirichlet_parameter,
+      eval_spline_lpdf,
+      expit
+    )
+  }
+
+  # adding individual priors (CW priors)
+  if (length(prior_data$which_cw) > 0){
+    logdens <- logdens + cw_priors_lpdf(
+      theta[prior_data$which_cw],
+      matrix(prior_data$cw_prior_info[prior_data$which_cw,], ncol = 3),
+      choose_prior_lpdf
+    )
+  }
+
+  return(logdens)
+
+}
+
+
+#' @rdname eval_joint_prior
+#' @export
+make_eval_prior_data <- function(prior_obj){
+
+  dat <- make_stan_data_object(prior_obj)
+
+  res <- list(
+    which_theta_in_hd = dat$which_theta_in_hd,
+    likelihood = dat$likelihood,
+    which_pc = dat$which_pc,
+    w_o = dat$w_o,
+    w_u = dat$w_u,
+    n_splits_each_tree = dat$n_splits_each_tree,
+    row_index_hd_pr = dat$row_index_hd_pr,
+    knots = dat$knots,
+    prior_coeffs = dat$prior_coeffs,
+    n_knots = dat$n_knots,
+    totvar_prior_info = dat$totvar_prior_info,
+    which_cw = dat$which_cw,
+    cw_prior_info = dat$cw_prior_info
+  )
+
+  return(dat)
+
+}
+
+
+#' Internal variance parameter order
+#'
+#' Returns the internal order of the variance parameters related to each random effect in the model.
+#' @param prior_obj Object of class \code{mmp_prior}, see \link[makemyprior]{make_prior}.
+#' @return Names of the random effects in the model in the order the prior object reads them.
+#'
+#' @examples
+#' ex_model <- makemyprior_example_model()
+#' get_parameter_order(ex_model)
+#'
+#' @export
+get_parameter_order <- function(prior_obj) return(prior_obj$node_data$orig_nodedata$label)
+
+
+
 
 
 
