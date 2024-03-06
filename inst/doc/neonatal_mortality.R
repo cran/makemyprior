@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -33,20 +33,20 @@ prior1 <- make_prior(
 prior1
 
 
-## ---- fig.width = 5, fig.height = 3, eval = FALSE-----------------------------
+## ----fig.width = 5, fig.height = 3, eval = FALSE------------------------------
 #  plot_prior(prior1) # or plot(prior1)
 
-## ---- fig.width = 5, fig.height = 3, eval = FALSE-----------------------------
+## ----fig.width = 5, fig.height = 3, eval = FALSE------------------------------
 #  plot_tree_structure(prior1)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  posterior1 <- inference_stan(prior1, iter = 15000, warmup = 5000,
 #                              seed = 1, init = "0", chains = 1)
 #  
 #  plot_posterior_stan(posterior1, param = "prior", plot_prior = TRUE)
 #  
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  posterior1_inla <- inference_inla(prior1, Ntrials = neonatal_data$Ntrials)
 #  plot_posterior_stdev(posterior1_inla)
 #  
@@ -57,13 +57,13 @@ prior2 <- make_prior(formula, neonatal_data, family = "binomial")
 prior2
 
 
-## ---- fig.width = 5, fig.height = 3, eval = FALSE-----------------------------
+## ----fig.width = 5, fig.height = 3, eval = FALSE------------------------------
 #  plot_prior(prior2)
 
-## ---- fig.width = 5, fig.height = 3, eval = FALSE-----------------------------
+## ----fig.width = 5, fig.height = 3, eval = FALSE------------------------------
 #  plot_tree_structure(prior2)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  posterior2 <- inference_stan(prior2, iter = 15000, warmup = 5000,
 #                              seed = 1, init = "0", chains = 1)
 #  

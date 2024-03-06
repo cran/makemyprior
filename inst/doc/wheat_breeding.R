@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -30,20 +30,20 @@ prior1 <- make_prior(formula, wheat_data_scaled, prior = list(
 prior1
 
 
-## ---- fig.width = 5, fig.height = 3-------------------------------------------
+## ----fig.width = 5, fig.height = 3--------------------------------------------
 plot_prior(prior1) # or plot(prior1)
 
-## ---- fig.width = 5, fig.height = 3-------------------------------------------
+## ----fig.width = 5, fig.height = 3--------------------------------------------
 plot_tree_structure(prior1)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  posterior1 <- inference_stan(prior1, iter = 15000, warmup = 5000,
 #                              chains = 1, seed = 1)
 #  
 #  plot_posterior_stan(posterior1, param = "prior", prior = TRUE)
 #  
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  posterior1_inla <- inference_inla(prior1)
 #  plot_posterior_stdev(posterior1_inla)
 #  
@@ -59,13 +59,13 @@ prior2 <- make_prior(formula, wheat_data_scaled, prior = list(
 prior2
 
 
-## ---- fig.width = 5, fig.height = 3-------------------------------------------
+## ----fig.width = 5, fig.height = 3--------------------------------------------
 plot_prior(prior2)
 
-## ---- fig.width = 5, fig.height = 3-------------------------------------------
+## ----fig.width = 5, fig.height = 3--------------------------------------------
 plot_tree_structure(prior2)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  posterior2 <- inference_stan(prior2, iter = 15000, warmup = 5000,
 #                              chains = 1, seed = 1)
 #  
