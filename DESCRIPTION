@@ -1,7 +1,7 @@
 Package: makemyprior
 Type: Package
 Title: Intuitive Construction of Joint Priors for Variance Parameters
-Version: 1.2.0
+Version: 1.2.1
 Authors@R: c(
     person("Ingeborg", "Hem", email = "ingeborg.hem@ntnu.no", role = c("cre", "aut")),
     person("Geir-Arne", "Fuglstad", role = "aut"),
@@ -18,10 +18,10 @@ Additional_repositories: https://inla.r-inla-download.org/R/stable/
 VignetteBuilder: knitr
 RoxygenNote: 7.2.3
 NeedsCompilation: no
-Packaged: 2024-03-06 09:51:07 UTC; ingebogh
+Packaged: 2024-04-09 07:36:31 UTC; ingebogh
 Author: Ingeborg Hem [cre, aut],
   Geir-Arne Fuglstad [aut],
   Andrea Riebler [aut]
 Maintainer: Ingeborg Hem <ingeborg.hem@ntnu.no>
 Repository: CRAN
-Date/Publication: 2024-03-06 13:10:03 UTC
+Date/Publication: 2024-04-09 11:20:02 UTC
